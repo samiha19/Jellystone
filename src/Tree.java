@@ -4,6 +4,7 @@ public class Tree implements Burnable {
     private double spreadability;
     private double burnIntensity;
     private boolean alive;
+    private int growthAge;
     private double health;
     private double maxHealth;
     private double burnIntensityFactor;
@@ -28,6 +29,7 @@ public class Tree implements Burnable {
         this.maxHealth = maxHealth;
         this.health = maxHealth;
         this.alive = true;
+        this.growthAge = 100;
     }
 
     @Override
@@ -160,4 +162,19 @@ public class Tree implements Burnable {
             );
         }
     }
+
+public void startGrowth() {
+    growthAge = 0;
+}
+
+public void grow() {
+    if (alive && !burning && growthAge < 100) {
+        growthAge++;
+    }
+}
+
+public int getGrowthAge() {
+    return growthAge;
+}
+
 }
