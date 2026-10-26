@@ -1,3 +1,4 @@
+
 import java.util.Random;
 
 public class Forest {
@@ -26,7 +27,6 @@ public class Forest {
 
                 grid[row][col] = new Cell(row, col);
 
-                // 80% chance of there being a tree
                 if (random.nextDouble() < 0.8) {
 
                     double spreadability =
@@ -56,9 +56,139 @@ public class Forest {
     public void update() {
 
         spreadFire();
+
+        generateSmoke();
+
+        moveSmoke();
+
+        dissipateSmoke();
+
         advanceBurningTrees();
+
+        if (!hasActiveFire()) {
+            regrowTrees();
+        }
+
+        growTrees();
     }
 
+    private void generateSmoke() {
+
+        for (Cell[] row : grid) {
+
+            for (Cell cell : row) {
+
+                if (cell.hasTree() &&
+                    cell.getTree().isBurning()) {
+
+                    double currentSmoke =
+                            cell.getSmokeConcentration();
+
+                    cell.setSmokeConcentration(
+                            currentSmoke + 5.0
+                    );
+                }
+            }
+        }
+    }
+
+    private void moveSmoke() {
+
+        if (wind == null || wind.getSpeed() <= 0) {
+            return;
+        }
+
+        int rows = grid.length;
+        int cols = grid[0].length;
+
+        double[][] smokeChanges = new double[rows][cols];
+
+        int dx = 0;
+        int dy = 0;
+
+        switch (wind.getDirection()) {
+
+            case "NORTH":
+                dy = -1;
+                break;
+
+            case "SOUTH":
+                dy = 1;
+                break;
+
+            case "EAST":
+                dx = 1;
+                break;
+
+            case "WEST":
+                dx = -1;
+                break;
+
+            default:
+                return;
+        }
+
+        for (int row = 0; row < rows; row++) {
+
+            for (int col = 0; col < cols; col++) {
+
+                Cell cell = grid[row][col];
+
+                double smoke = cell.getSmokeConcentration();
+
+                if (smoke <= 0) {
+                    continue;
+                }
+
+                int nextRow = row + dy;
+                int nextCol = col + dx;
+
+                if (nextRow < 0 || nextRow >= rows ||
+                    nextCol < 0 || nextCol >= cols) {
+                    continue;
+                }
+
+                double exposure =
+                        wind.calculateExposure(col, row);
+
+                double movementFraction =
+                        Math.min(0.30, exposure * 0.30);
+
+                double smokeToMove = smoke * movementFraction;
+
+                smokeChanges[row][col] -= smokeToMove;
+                smokeChanges[nextRow][nextCol] += smokeToMove;
+            }
+        }
+
+        for (int row = 0; row < rows; row++) {
+
+            for (int col = 0; col < cols; col++) {
+
+                double updatedSmoke =
+                        grid[row][col].getSmokeConcentration()
+                        + smokeChanges[row][col];
+
+                grid[row][col].setSmokeConcentration(updatedSmoke);
+            }
+        }
+    }
+
+    private void dissipateSmoke() {
+
+        for (Cell[] row : grid) {
+
+            for (Cell cell : row) {
+
+                double currentSmoke =
+                        cell.getSmokeConcentration();
+
+                double newSmoke = currentSmoke - 2.0;
+
+                cell.setSmokeConcentration(newSmoke);
+            }
+        }
+    }
 
     private void advanceBurningTrees() {
 
@@ -77,13 +207,79 @@ public class Forest {
                 }
 
                 if (!tree.isAlive()) {
+
                     cell.removeTree();
+
+                    cell.setBurnedBefore(true);
+
+                    cell.resetRecoveryTimer();
                 }
             }
         }
     }
 
-    
+    private boolean hasActiveFire() {
+
+        for (Cell[] row : grid) {
+
+            for (Cell cell : row) {
+
+                if (cell.hasTree() &&
+                    cell.getTree().isBurning()) {
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void regrowTrees() {
+
+        for (Cell[] row : grid) {
+
+            for (Cell cell : row) {
+
+                if (!cell.wasBurned() || cell.hasTree()) {
+                    continue;
+                }
+
+                cell.increaseRecoveryTimer();
+
+                if (cell.getRecoveryTimer() >= 3) {
+
+                    double spreadability =
+                            0.3 + random.nextDouble() * 0.7;
+
+                    Tree newTree = new Tree(spreadability);
+
+                    newTree.startGrowth();
+
+                    cell.plantTree(newTree);
+
+                    cell.setBurnedBefore(false);
+
+                    cell.resetRecoveryTimer();
+                }
+            }
+        }
+    }
+
+    private void growTrees() {
+
+        for (Cell[] row : grid) {
+
+            for (Cell cell : row) {
+
+                if (cell.hasTree()) {
+
+                    cell.getTree().grow();
+                }
+            }
+        }
+    }
+
     private void spreadFire() {
 
         boolean[][] igniteNext =
@@ -110,7 +306,6 @@ public class Forest {
             }
         }
 
-        // Ignite AFTER checking the entire grid
         for (int row = 0; row < grid.length; row++) {
 
             for (int col = 0; col < grid[row].length; col++) {
@@ -123,11 +318,11 @@ public class Forest {
     }
 
     private void trySpread(
-        int sourceRow,
-        int sourceCol,
-        int row,
-        int col,
-        boolean[][] igniteNext) {
+            int sourceRow,
+            int sourceCol,
+            int row,
+            int col,
+            boolean[][] igniteNext) {
 
         if (row < 0 ||
             row >= grid.length ||
@@ -158,7 +353,7 @@ public class Forest {
                     col,
                     row
             );
-}
+        }
 
         chance += aridity * 0.2;
 
