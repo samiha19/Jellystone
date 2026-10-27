@@ -22,12 +22,6 @@ public class ForestPanel extends JPanel {
         this.forest = forest;
         this.lightning = lightning;
 
-        System.out.println(new java.io.File("images/tree.png").exists());
-        System.out.println(new java.io.File("images/seedling.png").exists());
-        System.out.println(new java.io.File("images/young_tree.png").exists());
-        System.out.println(new java.io.File("images/fire.png").exists());
-        System.out.println(new java.io.File("images/lightning.png").exists());
-
         treeImage = new ImageIcon("images/tree.png").getImage();
         seedlingImage = new ImageIcon("images/seedling.png").getImage();
         youngTreeImage = new ImageIcon("images/young_tree.png").getImage();
@@ -44,6 +38,9 @@ public class ForestPanel extends JPanel {
 
         int cellWidth = getWidth() / grid[0].length;
         int cellHeight = getHeight() / grid.length;
+
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, getWidth(), getHeight());
 
         Cell currentLightningCell = null;
 
@@ -67,68 +64,104 @@ public class ForestPanel extends JPanel {
                 int x = col * cellWidth;
                 int y = row * cellHeight;
 
-                g.setColor(Color.BLACK);
-                g.fillRect(x, y, cellWidth, cellHeight);
+                int fullWidth = Math.max(1, cellWidth - 1);
+                int fullHeight = Math.max(1, cellHeight - 1);
 
-                if (lightning != null &&
-                    cell == currentLightningCell &&
-                    System.currentTimeMillis() - lightningStartTime < 3000) {
+                boolean showLightning =
+                        lightning != null &&
+                        cell == currentLightningCell &&
+                        System.currentTimeMillis()
+                                - lightningStartTime < 3000;
+
+                if (showLightning) {
 
                     g.drawImage(
-                        lightningImage,
-                        x + 2,
-                        y + 2,
-                        cellWidth - 4,
-                        cellHeight - 4,
-                        this
+                            lightningImage,
+                            x,
+                            y,
+                            fullWidth,
+                            fullHeight,
+                            this
                     );
-                }
-                else if (cell.hasTree()) {
+
+                } else if (cell.hasTree()) {
 
                     Tree tree = cell.getTree();
 
                     if (tree.isBurning()) {
 
                         g.drawImage(
-                            fireImage,
-                            x + 2,
-                            y + 2,
-                            cellWidth - 4,
-                            cellHeight - 4,
-                            this
+                                fireImage,
+                                x,
+                                y,
+                                fullWidth,
+                                fullHeight,
+                                this
                         );
-                    }
-                    else {
+
+                    } else {
+
+                        int age = tree.getGrowthAge();
 
                         Image currentImage;
 
-                        if (tree.getGrowthAge() < 30) {
+                        if (age < 30) {
 
                             currentImage = seedlingImage;
 
-                        }
-                        else if (tree.getGrowthAge() < 70) {
+                        } else if (age < 70) {
 
                             currentImage = youngTreeImage;
 
-                        }
-                        else {
+                        } else {
 
                             currentImage = treeImage;
                         }
 
+                        double progress =
+                                Math.max(
+                                        0.0,
+                                        Math.min(1.0, age / 100.0)
+                                );
+
+                        double scale =
+                                0.75 + progress * 0.25;
+
+                        int imageWidth = Math.max(
+                                1,
+                                (int) Math.round(fullWidth * scale)
+                        );
+
+                        int imageHeight = Math.max(
+                                1,
+                                (int) Math.round(fullHeight * scale)
+                        );
+
+                        int imageX =
+                                x + (cellWidth - imageWidth) / 2;
+
+                        int imageY =
+                                y + cellHeight - imageHeight;
+
                         g.drawImage(
-                            currentImage,
-                            x + 2,
-                            y + 2,
-                            cellWidth - 4,
-                            cellHeight - 4,
-                            this
+                                currentImage,
+                                imageX,
+                                imageY,
+                                imageWidth,
+                                imageHeight,
+                                this
                         );
                     }
                 }
 
-                drawSmoke(g, cell, x, y, cellWidth, cellHeight);
+                drawSmoke(
+                        g,
+                        cell,
+                        x,
+                        y,
+                        cellWidth,
+                        cellHeight
+                );
             }
         }
     }
@@ -147,20 +180,22 @@ public class ForestPanel extends JPanel {
             return;
         }
 
-        int alpha = (int) Math.min(210, 45 + smoke * 3.0);
+        int alpha = (int) Math.min(
+                210,
+                45 + smoke * 3.0
+        );
 
         Graphics2D g2d = (Graphics2D) g.create();
 
-        g2d.setColor(new Color(210, 210, 210, alpha));
-
-        int smokeWidth = Math.max(1, cellWidth);
-        int smokeHeight = Math.max(1, cellHeight);
+        g2d.setColor(
+                new Color(210, 210, 210, alpha)
+        );
 
         g2d.fillOval(
-            x,
-            y,
-            smokeWidth,
-            smokeHeight
+                x,
+                y,
+                Math.max(1, cellWidth),
+                Math.max(1, cellHeight)
         );
 
         g2d.dispose();

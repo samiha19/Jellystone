@@ -167,11 +167,13 @@ public void startGrowth() {
     growthAge = 0;
 }
 
+
 public void grow() {
     if (alive && !burning && growthAge < 100) {
-        growthAge++;
+        growthAge = Math.min(100, growthAge + 4);
     }
 }
+
 
 public int getGrowthAge() {
     return growthAge;
