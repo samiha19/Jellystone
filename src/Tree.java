@@ -1,3 +1,4 @@
+
 public class Tree implements Burnable {
 
     private boolean burning;
@@ -8,6 +9,8 @@ public class Tree implements Burnable {
     private double health;
     private double maxHealth;
     private double burnIntensityFactor;
+
+    private TreeGrowthState growthState;
 
     public Tree(double spreadability) {
         this(spreadability, 100.0, 1.0);
@@ -30,6 +33,8 @@ public class Tree implements Burnable {
         this.health = maxHealth;
         this.alive = true;
         this.growthAge = 100;
+
+        this.growthState = new MatureTreeState();
     }
 
     @Override
@@ -42,7 +47,7 @@ public class Tree implements Burnable {
         burnIntensity = burnIntensityFactor;
     }
 
-    // OVERLOADED version
+    // Overloaded version
     public void ignite(double severity) {
         if (alive && severity >= 0.5) {
             burning = true;
@@ -83,6 +88,7 @@ public class Tree implements Burnable {
     public boolean isBurning() {
         return burning;
     }
+
     public boolean isAlive() {
         return alive;
     }
@@ -132,8 +138,6 @@ public class Tree implements Burnable {
         return getClass().getSimpleName().toUpperCase();
     }
 
-    //exceptions
-
     private static void validateSpreadability(double spreadability) {
         if (!Double.isFinite(spreadability)
                 || spreadability < 0.0
@@ -163,20 +167,40 @@ public class Tree implements Burnable {
         }
     }
 
-public void startGrowth() {
-    growthAge = 0;
-}
-
-
-public void grow() {
-    if (alive && !burning && growthAge < 100) {
-        growthAge = Math.min(100, growthAge + 4);
+    // A newly planted tree begins as a seedling
+    public void startGrowth() {
+        growthAge = 0;
+        growthState = new SeedlingState();
     }
-}
 
+    // The current state controls how the tree grows
+    public void grow() {
+        if (alive && !burning && growthAge < 100) {
+            growthState.grow(this);
+        }
+    }
 
-public int getGrowthAge() {
-    return growthAge;
-}
+    public void increaseGrowthAge() {
+        if (growthAge < 100) {
+            growthAge = Math.min(100, growthAge + 4);
+        }
+    }
 
+    public int getGrowthAge() {
+        return growthAge;
+    }
+
+    public void setGrowthState(TreeGrowthState state) {
+        if (state == null) {
+            throw new IllegalArgumentException(
+                    "Growth state cannot be null"
+            );
+        }
+
+        this.growthState = state;
+    }
+
+    public String getGrowthStage() {
+        return growthState.getStageName();
+    }
 }

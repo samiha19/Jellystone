@@ -1,5 +1,7 @@
 
+import java.util.Arrays;
 import java.util.Random;
+import java.util.stream.Stream;
 
 public class Forest {
 
@@ -249,18 +251,20 @@ public class Forest {
 
                 if (cell.getRecoveryTimer() >= 3) {
 
-                    double spreadability =
-                            0.3 + random.nextDouble() * 0.7;
+                    if (random.nextDouble() < 0.025) {
 
-                    Tree newTree = new Tree(spreadability);
+                        double spreadability =
+                                0.3 + random.nextDouble() * 0.7;
 
-                    newTree.startGrowth();
+                        Tree newTree = new Tree(spreadability);
 
-                    cell.plantTree(newTree);
+                        newTree.startGrowth();
 
-                    cell.setBurnedBefore(false);
+                        cell.plantTree(newTree);
 
-                    cell.resetRecoveryTimer();
+                        cell.setBurnedBefore(false);
+                        cell.resetRecoveryTimer();
+                    }
                 }
             }
         }
@@ -387,5 +391,39 @@ public class Forest {
 
             System.out.println();
         }
+    }
+
+    // Converts the 2D forest grid into a stream of cells
+    private Stream<Cell> streamCells() {
+
+        return Arrays.stream(grid)
+                .flatMap(Arrays::stream);
+    }
+
+    // Counts all currently burning trees
+    public long countBurningTrees() {
+
+        return streamCells()
+                .filter(cell -> cell.hasTree())
+                .filter(cell -> cell.getTree().isBurning())
+                .count();
+    }
+
+    // Counts all living trees
+    public long countLivingTrees() {
+
+        return streamCells()
+                .filter(cell -> cell.hasTree())
+                .filter(cell -> cell.getTree().isAlive())
+                .count();
+    }
+
+    // Calculates average smoke concentration
+    public double getAverageSmoke() {
+
+        return streamCells()
+                .mapToDouble(cell -> cell.getSmokeConcentration())
+                .average()
+                .orElse(0.0);
     }
 }
