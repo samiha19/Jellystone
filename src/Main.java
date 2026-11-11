@@ -1,5 +1,6 @@
 
 import javax.swing.*;
+import java.awt.BorderLayout;
 import java.util.Random;
 
 public class Main {
@@ -47,13 +48,19 @@ public class Main {
             System.out.println("Ignition failed: " + e.getMessage());
         }
 
-        JFrame window = new JFrame("Forest Fire Simulation");
+        JFrame window = new JFrame(
+                "Forest Fire Simulation - Environmental Monitor"
+        );
+
+        window.setLayout(new BorderLayout());
 
         ForestPanel panel = new ForestPanel(forest, lightning);
+        ForestDashboard dashboard = new ForestDashboard(forest);
 
-        window.add(panel);
+        window.add(panel, BorderLayout.CENTER);
+        window.add(dashboard, BorderLayout.EAST);
 
-        window.setSize(900, 600);
+        window.setSize(1200, 700);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setLocationRelativeTo(null);
         window.setVisible(true);
@@ -61,6 +68,8 @@ public class Main {
         Timer timer = new Timer(500, event -> {
 
             forest.update();
+
+            dashboard.updateStatistics();
 
             panel.repaint();
         });
