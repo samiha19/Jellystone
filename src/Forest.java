@@ -1,6 +1,7 @@
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 public class Forest {
@@ -426,4 +427,35 @@ public class Forest {
                 .average()
                 .orElse(0.0);
     }
+
+    // Count living trees using parallel streams
+    public long countLivingTreesParallel() {
+        return Arrays.stream(grid)
+                .parallel()
+                .flatMap(Arrays::stream)
+                .filter(Cell::hasTree)
+                .filter(cell -> cell.getTree().isAlive())
+                .count();
+    }
+
+    // Count burning trees using parallel streams
+    public long countBurningTreesParallel() {
+        return Arrays.stream(grid)
+                .parallel()
+                .flatMap(Arrays::stream)
+                .filter(Cell::hasTree)
+                .filter(cell -> cell.getTree().isBurning())
+                .count();
+    }
+
+    // Calculate average smoke using parallel streams
+    public double getAverageSmokeParallel() {
+        return Arrays.stream(grid)
+                .parallel()
+                .flatMap(Arrays::stream)
+                .mapToDouble(Cell::getSmokeConcentration)
+                .average()
+                .orElse(0.0);
+    }
+
 }
