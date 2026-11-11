@@ -55,9 +55,9 @@ public class ForestDashboard extends JPanel {
 
     public void updateStatistics() {
 
-        long living = forest.countLivingTrees();
-        long burning = forest.countBurningTrees();
-        double averageSmoke = forest.getAverageSmoke();
+        long living = forest.countLivingTreesParallel();
+        long burning = forest.countBurningTreesParallel();
+        double averageSmoke = forest.getAverageSmokeParallel();
 
         Cell[][] grid = forest.getGrid();
         int totalCells = grid.length * grid[0].length;
